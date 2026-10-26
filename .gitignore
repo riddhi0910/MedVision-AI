@@ -1,0 +1,66 @@
+# ============================================================
+# .gitignore — Files that Git will NEVER commit
+# ============================================================
+# Why this matters: datasets are huge (> 1 GB), model weights
+# can be hundreds of MB, and .env files contain secrets.
+# We tell Git to skip all of them.
+# ============================================================
+
+# Python cache files (auto-generated, not needed in Git)
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environment (created locally, not portable)
+venv/
+.venv/
+env/
+.env/
+
+# Environment variables file (may contain API keys / paths)
+.env
+
+# Dataset — never commit medical images to a public repo
+data/
+chest_xray/
+*.zip
+*.tar.gz
+*.tar
+
+# Model checkpoints and weights (large binary files)
+artifacts/checkpoints/
+artifacts/logs/
+models/checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.h5
+
+# Jupyter notebook outputs (can contain embedded images)
+notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Reports / generated figures (reproducible from code)
+reports/*.png
+reports/*.jpg
+reports/*.pdf
+reports/*.html
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Coverage and test artefacts
+.coverage
+htmlcov/
+.pytest_cache/

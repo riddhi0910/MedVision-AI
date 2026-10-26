@@ -1,0 +1,88 @@
+# ============================================================
+# MedVision AI — Project Configuration
+# ============================================================
+# This file controls every important setting in one place.
+# Adjust paths, hyperparameters, and flags here instead of
+# editing source code.
+# ============================================================
+
+project:
+  name: "MedVision AI"
+  version: "1.0.0"
+  description: "Explainable Chest X-Ray Classification using Deep Learning"
+
+# ---- Dataset ------------------------------------------------
+dataset:
+  # Path to the extracted Kaggle dataset root.
+  # Override this with the DATASET_ROOT environment variable in .env
+  root: "data/chest_xray"
+
+  # Class labels (order matters — index 0 = NORMAL, index 1 = PNEUMONIA)
+  classes:
+    - "NORMAL"
+    - "PNEUMONIA"
+
+  # When the official val split is too small we create a new one
+  # from training data.  val_split = fraction held out for validation.
+  val_split: 0.15          # 15 % of training data used for validation
+  random_seed: 42          # Makes splits reproducible
+
+# ---- Preprocessing ------------------------------------------
+preprocessing:
+  image_size: 224          # Resize all images to 224 × 224 pixels
+  # ImageNet normalisation constants (mean & std per RGB channel)
+  # These values come from the large ImageNet dataset that ResNet was
+  # pretrained on.  Using the same values keeps features consistent.
+  mean: [0.485, 0.456, 0.406]
+  std:  [0.229, 0.224, 0.225]
+
+# ---- Data Loading -------------------------------------------
+dataloader:
+  batch_size: 32           # Images processed together in one step
+  num_workers: 2           # Parallel workers that load images
+  pin_memory: true         # Speeds up GPU data transfer
+
+# ---- Baseline CNN -------------------------------------------
+cnn:
+  out_channels_1: 32       # Filters in first conv block
+  out_channels_2: 64       # Filters in second conv block
+  out_channels_3: 128      # Filters in third conv block
+  dropout: 0.5             # Fraction of neurons randomly disabled during training
+  learning_rate: 0.001
+  epochs: 20
+  optimizer: "adam"
+
+# ---- ResNet-18 Transfer Learning ----------------------------
+resnet:
+  pretrained: true         # Start from ImageNet weights
+  freeze_backbone: true    # True = only train the new head at first
+  fine_tune_layers: 2      # Number of ResNet layer-groups to unfreeze later
+  learning_rate: 0.0003    # Smaller LR for fine-tuning
+  weight_decay: 0.0001     # L2 regularisation
+  epochs: 25
+  optimizer: "adamw"
+  scheduler: "cosine"      # Learning-rate scheduler type
+
+# ---- Training -----------------------------------------------
+training:
+  early_stopping_patience: 5   # Stop if val loss doesn't improve for N epochs
+  save_best_model: true
+  checkpoint_dir: "artifacts/checkpoints"
+  log_dir: "artifacts/logs"
+  use_class_weights: true  # Compensate for class imbalance
+
+# ---- Inference ----------------------------------------------
+inference:
+  default_model: "resnet18"    # "resnet18" or "cnn"
+  confidence_threshold: 0.5
+
+# ---- Grad-CAM -----------------------------------------------
+gradcam:
+  target_layer: "layer4"   # ResNet-18 layer used for Grad-CAM
+  colormap: "jet"           # Heatmap colour scheme
+  alpha: 0.4               # Blend weight of heatmap over original image
+
+# ---- Reports ------------------------------------------------
+reports:
+  output_dir: "reports"
+  save_plots: true
