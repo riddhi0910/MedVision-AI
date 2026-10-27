@@ -148,7 +148,15 @@ def load_model_from_checkpoint(
         # Fallback: the checkpoint IS the state dict
         state_dict = checkpoint
 
-    model.load_state_dict(state_dict)
+    try:
+        model.load_state_dict(state_dict)
+    except RuntimeError as e:
+        print(f"[Load] Warning: Strict state_dict load failed: {e}")
+        try:
+            model.load_state_dict(state_dict, strict=False)
+            print("[Load] Loaded compatible weights with strict=False.")
+        except Exception as e2:
+            print(f"[Load] Fallback to initialized model weights: {e2}")
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

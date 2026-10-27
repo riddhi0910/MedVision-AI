@@ -14,32 +14,38 @@ from src.models.cnn import build_baseline_cnn
 def main():
     config_path = PROJECT_ROOT / "configs" / "config.yaml"
     cfg = get_config(str(config_path))
-    ckpt_dir = PROJECT_ROOT / "artifacts" / "checkpoints"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    ckpt_dirs = [
+        PROJECT_ROOT / "artifacts" / "checkpoints",
+        PROJECT_ROOT / "models" / "checkpoints"
+    ]
+    for d in ckpt_dirs:
+        d.mkdir(parents=True, exist_ok=True)
 
     print("1. Creating ResNet-18 working checkpoint...")
     resnet = build_resnet(cfg)
-    resnet_path = ckpt_dir / "best_resnet18.pth"
-    torch.save({
-        "epoch": 15,
-        "val_acc": 0.952,
-        "val_loss": 0.142,
-        "model_state_dict": resnet.state_dict(),
-        "model_type": "resnet18"
-    }, resnet_path)
-    print(f"   Saved -> {resnet_path}")
+    for d in ckpt_dirs:
+        resnet_path = d / "best_resnet18.pth"
+        torch.save({
+            "epoch": 15,
+            "val_acc": 0.952,
+            "val_loss": 0.142,
+            "model_state_dict": resnet.state_dict(),
+            "model_type": "resnet18"
+        }, resnet_path)
+        print(f"   Saved -> {resnet_path}")
 
     print("2. Creating Baseline CNN working checkpoint...")
     cnn = build_baseline_cnn(cfg)
-    cnn_path = ckpt_dir / "best_cnn.pth"
-    torch.save({
-        "epoch": 20,
-        "val_acc": 0.898,
-        "val_loss": 0.285,
-        "model_state_dict": cnn.state_dict(),
-        "model_type": "cnn"
-    }, cnn_path)
-    print(f"   Saved -> {cnn_path}")
+    for d in ckpt_dirs:
+        cnn_path = d / "best_cnn.pth"
+        torch.save({
+            "epoch": 20,
+            "val_acc": 0.898,
+            "val_loss": 0.285,
+            "model_state_dict": cnn.state_dict(),
+            "model_type": "cnn"
+        }, cnn_path)
+        print(f"   Saved -> {cnn_path}")
 
     print("3. Generating sample X-ray images for immediate browser testing...")
     sample_dir = PROJECT_ROOT / "artifacts" / "sample_xrays"
