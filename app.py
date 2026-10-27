@@ -240,9 +240,7 @@ def load_model(model_type: str, cfg: dict):
     from src.training.train import get_device
 
     device    = get_device(cfg)
-    ckpt_dir  = PROJECT_ROOT / "models" / "checkpoints"
-    if not (ckpt_dir / "best_resnet18.pth").exists():
-        ckpt_dir = Path(cfg["training"]["checkpoint_dir"])
+    ckpt_dir  = PROJECT_ROOT / cfg["training"]["checkpoint_dir"]
 
     if model_type == "resnet18":
         from src.models.resnet import build_resnet

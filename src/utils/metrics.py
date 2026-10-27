@@ -21,15 +21,6 @@ Why so many metrics?
 """
 
 import numpy as np
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_auc_score,
-    confusion_matrix,
-    classification_report,
-)
 
 
 def compute_metrics(
@@ -58,6 +49,17 @@ def compute_metrics(
     dict
         Dictionary with all metric values.
     """
+    # Imported here: sklearn pulls in pandas (~100 MB), which the web server never needs
+    from sklearn.metrics import (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+        roc_auc_score,
+        confusion_matrix,
+        classification_report,
+    )
+
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
 

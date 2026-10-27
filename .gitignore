@@ -34,7 +34,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Dataset — never commit medical images or huge archives to Git
-data/
+/data/
 chest_xray/
 *.zip
 *.tar.gz
@@ -50,6 +50,11 @@ chest_xray/
 *.h5
 *.onnx
 *.bin
+
+# Except the two final trained models the app serves (45 MB total, under
+# GitHub's 100 MB limit) so a fresh clone / Render deploy works out of the box
+!artifacts/checkpoints/best_resnet18.pth
+!artifacts/checkpoints/best_cnn.pth
 
 # Keep empty checkpoint folders via .gitkeep
 !**/.gitkeep

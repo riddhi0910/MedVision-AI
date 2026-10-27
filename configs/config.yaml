@@ -83,5 +83,5 @@ gradcam:
 
 # ---- Reports ------------------------------------------------
 reports:
-  output_dir: "reports"
+  output_dir: "artifacts/reports"
   save_plots: true

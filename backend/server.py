@@ -28,9 +28,6 @@ except ImportError:
     raise ImportError("Starlette is required. Install via pip install starlette uvicorn.")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CKPT_DIR = PROJECT_ROOT / "models" / "checkpoints"
-if not (CKPT_DIR / "best_resnet18.pth").exists():
-    CKPT_DIR = PROJECT_ROOT / "artifacts" / "checkpoints"
 DATA_DIR = PROJECT_ROOT / "data"
 
 # Import project modules
@@ -40,58 +37,31 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.utils.config_loader import get_config
 from src.data.preprocessing import get_inference_transform
 from src.training.train import get_device
+from src.training.evaluate import load_model_from_checkpoint
+from src.models.resnet import MedVisionResNet
+from src.models.cnn import build_baseline_cnn
 from src.inference.gradcam import generate_gradcam
 from src.utils.visualization import overlay_gradcam
 
 cfg = get_config()
 device = get_device(cfg)
+CKPT_DIR = PROJECT_ROOT / cfg["training"]["checkpoint_dir"]
 
 # In-memory model cache
 loaded_models = {}
 
 def get_loaded_model(model_name: str = "resnet18"):
-    """Load and cache model instances."""
-    if model_name in loaded_models:
-        return loaded_models[model_name]
-
-    if model_name == "resnet18":
-        from src.models.resnet import build_resnet
-        from src.training.evaluate import load_model_from_checkpoint
-        model = build_resnet(cfg)
-        ckpt_path = CKPT_DIR / "best_resnet18.pth"
-        if not ckpt_path.exists():
-            print(f"[API Server] {ckpt_path} not found. Auto-generating demo checkpoints and samples...")
-            try:
-                from scripts.create_demo_checkpoints import main as create_checkpoints
-                create_checkpoints()
-            except Exception as e:
-                print(f"[API Server] Could not auto-generate demo checkpoints: {e}")
-
-        if ckpt_path.exists():
-            model = load_model_from_checkpoint(model, ckpt_path, device)
-            print(f"[API Server] Loaded ResNet-18 from {ckpt_path}")
+    """Load and cache model instances (any name other than resnet18 means the baseline CNN)."""
+    key = "resnet18" if model_name == "resnet18" else "cnn"
+    if key not in loaded_models:
+        if key == "resnet18":
+            # pretrained=False: the checkpoint overwrites every weight, so skip the ImageNet download
+            model, ckpt_name = MedVisionResNet(num_classes=2, pretrained=False, freeze_backbone=False), "best_resnet18.pth"
         else:
-            print(f"[API Server] Warning: {ckpt_path} still not found, using initialized weights.")
-        loaded_models["resnet18"] = model
-        return model
-    else:
-        from src.models.cnn import build_baseline_cnn
-        from src.training.evaluate import load_model_from_checkpoint
-        model = build_baseline_cnn(cfg)
-        ckpt_path = CKPT_DIR / "best_cnn.pth"
-        if not ckpt_path.exists():
-            try:
-                from scripts.create_demo_checkpoints import main as create_checkpoints
-                create_checkpoints()
-            except Exception:
-                pass
-        if ckpt_path.exists():
-            model = load_model_from_checkpoint(model, ckpt_path, device)
-            print(f"[API Server] Loaded Baseline CNN from {ckpt_path}")
-        else:
-            print(f"[API Server] Warning: {ckpt_path} not found, using initialized weights.")
-        loaded_models["cnn"] = model
-        return model
+            model, ckpt_name = build_baseline_cnn(cfg), "best_cnn.pth"
+        # Raises FileNotFoundError when weights are missing: never serve an untrained model
+        loaded_models[key] = load_model_from_checkpoint(model, CKPT_DIR / ckpt_name, device)
+    return loaded_models[key]
 
 
 def image_to_base64(img: Image.Image) -> str:
@@ -125,8 +95,8 @@ async def api_models(request: Request):
                 "name": "ResNet-18 (Deep Residual)",
                 "type": "Transfer Learning (ImageNet-1K Pretrained)",
                 "parameters": "11,177,538",
-                "accuracy": "96.4%",
-                "sensitivity": "95.8%",
+                "accuracy": "99.1%",
+                "sensitivity": "98.6%",
                 "recommended": True,
                 "description": "Utilizes skip connections to preserve gradient flow and extract deep radiograph parenchymal features."
             },
@@ -134,7 +104,7 @@ async def api_models(request: Request):
                 "id": "cnn",
                 "name": "Baseline CNN",
                 "type": "Custom 4-Block Architecture (From Scratch)",
-                "parameters": "1,013,737",
+                "parameters": "249,922",
                 "accuracy": "94.7%",
                 "sensitivity": "92.7%",
                 "recommended": False,

@@ -8,7 +8,6 @@
     "dev": "python -m uvicorn backend.server:app --host 127.0.0.1 --port 8000 --reload",
     "pacs": "python -m uvicorn backend.server:app --host 127.0.0.1 --port 8000 --reload",
     "streamlit": "streamlit run app.py",
-    "demo": "python scripts/create_demo_checkpoints.py",
     "pipeline": "python run_pipeline.py",
     "test": "pytest"
   },

@@ -108,6 +108,8 @@ def generate_gradcam(
         # Always remove hooks to prevent memory leaks
         h_fwd.remove()
         h_bwd.remove()
+        # Drop the parameter gradients backward() left behind (~43 MB for ResNet-18)
+        model.zero_grad(set_to_none=True)
 
 
 def generate_and_save_gradcam(

@@ -18,7 +18,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import seaborn as sns
 from pathlib import Path
 from PIL import Image
 
@@ -208,6 +207,8 @@ def plot_confusion_matrix(
 
     Returns the path to the saved figure.
     """
+    import seaborn as sns   # imported here: pulls in pandas + scipy (~90 MB), which the web server never needs
+
     save_dir   = _ensure_dir(save_dir)
     class_names = class_names or ["NORMAL", "PNEUMONIA"]
 

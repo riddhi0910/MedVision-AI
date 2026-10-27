@@ -1,7 +1,7 @@
 # 🫁 MedVision AI — Clinical PACS Diagnostic Radiograph Workstation & Explainable AI (XAI) Suite
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.1+-ee4c2c.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Starlette](https://img.shields.io/badge/Starlette-ASGI-009688.svg)](https://www.starlette.io/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-ff4b4b.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776ab.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Accuracy](https://img.shields.io/badge/ResNet--18%20Accuracy-99.1%25-brightgreen.svg)]()
@@ -19,7 +19,7 @@ MedVision AI provides two dedicated user interfaces tailored for radiologists an
 
 | Interface | Port | Architecture | Core Highlights |
 | :--- | :--- | :--- | :--- |
-| **PACS Diagnostic Workstation** | `8000` | **FastAPI + Vanilla JS/HTML5** | **Zero-scroll single-screen clinical console**, side-by-side raw DX and AI Saliency Map, dynamic Grad-CAM blending (0-100%), Windowing LUT inversion, Nagpur City Hospital letterhead, and 1-click Dr. R. Somani attested PDF consultation report. |
+| **PACS Diagnostic Workstation** | `8000` | **Starlette + Vanilla JS/HTML5** | **Zero-scroll single-screen clinical console**, side-by-side raw DX and AI Saliency Map, dynamic Grad-CAM blending (0-100%), Windowing LUT inversion, Nagpur City Hospital letterhead, and 1-click Dr. R. Somani attested PDF consultation report. |
 | **Streamlit Research Explorer** | `8501` | **Python (Streamlit)** | Model comparison benchmark playground, interactive confidence threshold tuning, and raw attention tensor inspection. |
 
 ---
@@ -28,9 +28,9 @@ MedVision AI provides two dedicated user interfaces tailored for radiologists an
 
 | Document | Purpose |
 | :--- | :--- |
-| 🎓 **[explanation.md](explanation.md)** | **Teacher / Professor / Viva Presentation Guide**: Simple Hinglish script, exact XAI definition, 850 test cases confusion matrix analysis, precision-recall breakdown, and top 10 viva questions & answers. |
-| 🚀 **[start.md](start.md)** | **Startup & Environment Guide**: Step-by-step virtual environment setup, pip dependencies, direct Python commands, and NPM shortcuts. |
-| 📖 **[study.md](study.md)** | **Deep Learning Textbook**: From-scratch masterclass on chest radiography, CNN architectures, ResNet-18 residual math, Grad-CAM equations, and clinical evaluation. |
+| 🎓 **[docs/explanation.md](docs/explanation.md)** | **Teacher / Professor / Viva Presentation Guide**: Simple Hinglish script, exact XAI definition, 850 test cases confusion matrix analysis, precision-recall breakdown, and top 10 viva questions & answers. |
+| 🚀 **[docs/start.md](docs/start.md)** | **Startup & Environment Guide**: Step-by-step virtual environment setup, pip dependencies, direct Python commands, and NPM shortcuts. |
+| 📖 **[docs/study.md](docs/study.md)** | **Deep Learning Textbook**: From-scratch masterclass on chest radiography, CNN architectures, ResNet-18 residual math, Grad-CAM equations, and clinical evaluation. |
 | 📘 **[docs/learning.md](docs/learning.md)** | **Curriculum Roadmap**: Progressive 6-week DL roadmap covering foundations to clinical deployment. |
 | 🔬 **[docs/info.md](docs/info.md)** | **Technical Specifications**: Hyperparameters, model architecture diagrams, loss functions, and dataset metadata. |
 | 🗺️ **[docs/roadmap.md](docs/roadmap.md)** | **Project Roadmap**: Architectural milestones, completed tasks, and future multi-class clinical roadmap. |
@@ -101,9 +101,11 @@ python -m venv venv
 # Linux/macOS:
 source venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (server + Streamlit + notebooks + tests)
+pip install -r requirements-dev.txt
 ```
+
+Trained weights (`artifacts/checkpoints/best_resnet18.pth`, `best_cnn.pth`) are committed, so no training or dataset download is needed to run the app.
 
 ### 2. Launch the Application
 
@@ -116,7 +118,7 @@ python -m uvicorn backend.server:app --host 127.0.0.1 --port 8000 --reload
 npm start
 ```
 👉 Open Workstation: **[http://localhost:8000](http://localhost:8000)**  
-👉 Interactive OpenAPI / Swagger Docs: **[http://localhost:8000/docs](http://localhost:8000/docs)**
+👉 Health check: **[http://localhost:8000/api/health](http://localhost:8000/api/health)**
 
 #### Option B: Streamlit Medical Explorer (Port 8501)
 ```powershell
@@ -125,6 +127,13 @@ streamlit run app.py
 npm run streamlit
 ```
 👉 Open Streamlit: **[http://localhost:8501](http://localhost:8501)**
+
+### 3. Deploy on Render (free tier)
+1. Push this repo to GitHub.
+2. On [render.com](https://render.com): **New → Blueprint** → select the repo. Render reads [render.yaml](render.yaml).
+3. Wait for the build (installs CPU-only PyTorch), then open the `.onrender.com` URL.
+
+Free instances sleep after 15 min idle; the first request after that takes ~1 min to wake up.
 
 ---
 
@@ -136,7 +145,6 @@ Root contains a standard `package.json` for developers using npm:
 npm start           # Launches PACS Workstation on port 8000
 npm run dev         # Launches PACS Workstation with live reload
 npm run streamlit   # Launches Streamlit interface on port 8501
-npm run demo        # Generates test checkpoints and sample X-rays
 npm run pipeline    # Executes end-to-end training pipeline
 npm test            # Runs automated pytest suite
 ```
@@ -147,36 +155,40 @@ npm test            # Runs automated pytest suite
 
 ```text
 MedVision-AI/
-├── backend/                        # FastAPI REST API & In-Memory Inference Engine
-│   └── server.py                   # Endpoints (/api/analyze, /api/models, /api/health)
-├── frontend/                       # Clinical Diagnostic PACS Workstation
-│   └── public/                     # Single-screen zero-scroll UI (HTML5, CSS3, JS)
+├── backend/
+│   └── server.py                   # Starlette API (/api/predict, /api/models, /api/samples, /api/health) + serves frontend
+├── frontend/
+│   └── public/                     # Single-screen zero-scroll PACS UI (HTML5, CSS3, JS)
 │       ├── index.html              # Dual monitor viewport & consultation letterhead
 │       ├── style.css               # Medical workstation dark-mode design system
 │       └── app.js                  # Asynchronous client, Grad-CAM blend & PDF printer
-├── explanation.md                  # 🎓 Full Teacher / Viva Presentation Guide (Hinglish)
-├── start.md                        # 🚀 Comprehensive Startup & Environment Guide
-├── study.md                        # 📖 From-Scratch Deep Learning Masterclass Textbook
-├── models/                         # PyTorch Neural Architectures
-│   ├── checkpoints/                # Model weights (.pth ignored; tracked via .gitkeep)
-│   ├── cnn.py                      # Custom 4-block CNN architecture
-│   └── resnet.py                   # ResNet-18 residual transfer learning architecture
+├── src/                            # ML package (single source of truth for all code)
+│   ├── data/                       # Dataset loading & preprocessing transforms
+│   ├── models/                     # cnn.py (4-block baseline) & resnet.py (ResNet-18 transfer learning)
+│   ├── training/                   # Training loop & evaluation
+│   ├── inference/                  # Prediction & Grad-CAM
+│   └── utils/                      # Config loader, metrics, plots
+├── artifacts/
+│   ├── checkpoints/                # Trained weights: best_resnet18.pth, best_cnn.pth (committed)
+│   ├── reports/                    # Confusion matrices and Grad-CAM sample figures
+│   └── sample_xrays/               # Real test radiographs for 1-click demo
+├── configs/config.yaml             # All paths & hyperparameters
 ├── notebooks/                      # GPU Training Notebooks
 │   ├── Executed MedVision_Colab_OneClick.ipynb  # Pre-computed loss curves, CM & Grad-CAM
 │   └── MedVision_Colab_OneClick.ipynb           # Fresh Colab 1-click training notebook
-├── scripts/                        # Utility & Preprocessing Scripts
-│   ├── create_demo_checkpoints.py  # Instant test weights & sample radiograph generator
-│   ├── balance_and_split_dataset.py# 50-50 clinical data augmentation and split
-│   └── make_physical_splits.py     # Deterministic train/val/test directory partition
-├── artifacts/                      # Experiment artifacts & report plots
-│   └── reports/                    # Confusion matrices and Grad-CAM sample figures
-├── docs/                           # Synced documentation mirrors
-├── src/                            # Modular Python backend package
-├── app.py                          # Streamlit interactive diagnostic dashboard
-├── run_pipeline.py                 # End-to-end automated ML pipeline
-├── package.json                    # NPM developer script shortcuts
-├── requirements.txt                # Production Python dependencies
-└── .gitignore                      # Excludes >2.5GB datasets, virtual environments, binaries
+├── scripts/                        # Offline dataset curation (run in order)
+│   ├── build_custom_dataset.py     # 1. Integrity check, MD5 dedup, 80/10/10 split
+│   ├── balance_and_split_dataset.py# 2. 50-50 class balancing by augmentation
+│   ├── flatten_data_to_two_classes.py # 3. Pool into NORMAL/ and PNEUMONIA/
+│   └── make_physical_splits.py     # 4. Deterministic train/val/test directory partition
+├── docs/                           # Viva guide, startup guide, study notes, roadmap
+├── tests/                          # pytest suite
+├── app.py                          # Streamlit research explorer
+├── run_pipeline.py                 # End-to-end training pipeline
+├── render.yaml                     # Render deployment blueprint
+├── requirements.txt                # Runtime dependencies (what Render installs)
+├── requirements-dev.txt            # + Streamlit, Jupyter, pytest for local work
+└── package.json                    # Optional npm shortcuts
 ```
 
 ---

@@ -8,56 +8,16 @@
 MedVision AI is an end-to-end, medical-grade deep learning system that classifies pediatric chest radiographs into **NORMAL** and **PNEUMONIA** while providing **Grad-CAM visual heatmaps** to explain its diagnostic decisions to physicians.
 
 The project is structured as a clean, modular **Monolith** with strict folder separation:
-- `frontend/` ➡️ Streamlit Web User Interface
-- `backend/` ➡️ Data processing, inference pipeline, training logic, and evaluation utilities
-- `models/` ➡️ PyTorch model architectures (CNN, ResNet) and saved weight checkpoints (`.pth`)
+- `frontend/public/` ➡️ PACS workstation UI (HTML/CSS/JS), served by `backend/server.py`
+- `src/` ➡️ Data processing, model architectures (CNN, ResNet), training, inference & Grad-CAM
+- `artifacts/checkpoints/` ➡️ Trained weights (`.pth`)
+- `app.py` ➡️ Streamlit research explorer
 
 ---
 
 ## 📂 1. Clean Monolithic Folder Structure
 
-```text
-deep leaning final year project/
-├── MedVision-AI/
-│   ├── frontend/                     # 💻 All Web & User Interface Code
-│   │   ├── __init__.py
-│   │   └── app.py                    # Streamlit Web Application (Medical Dark Theme)
-│   │
-│   ├── backend/                      # ⚙️ Application Logic & Pipeline
-│   │   ├── __init__.py
-│   │   ├── data/
-│   │   │   ├── dataset.py            # PyTorch Dataset, resizing (224×224), augmentations
-│   │   │   ├── dataloader.py         # Train, val, test DataLoader constructors
-│   │   │   └── preprocessing.py      # Normalization & denormalization routines
-│   │   ├── inference/
-│   │   │   ├── predict.py            # End-to-end image prediction pipeline
-│   │   │   └── gradcam.py            # Native PyTorch Grad-CAM heatmap generator
-│   │   ├── training/
-│   │   │   ├── trainer.py            # Training loop with Early Stopping & LR Scheduler
-│   │   │   ├── train.py              # Main training execution script
-│   │   │   └── evaluate.py           # Test set evaluation & checkpoint loader
-│   │   └── utils/
-│   │       ├── config_loader.py      # YAML config parser
-│   │       ├── metrics.py            # Accuracy, Recall, Precision, F1, AUC-ROC
-│   │       └── visualization.py      # 6 clinical charts & Grad-CAM overlay
-│   │
-│   ├── models/                       # 🧠 Model Architectures & Trained Weights
-│   │   ├── __init__.py
-│   │   ├── cnn.py                    # 4-block Custom Baseline CNN (from scratch)
-│   │   ├── resnet.py                 # ResNet-18 Transfer Learning architecture
-│   │   └── checkpoints/              # 💾 Model weights (.pth files)
-│   │       ├── best_resnet18.pth     # High-accuracy ResNet model weights (~44 MB)
-│   │       └── best_cnn.pth          # Baseline CNN weights (~1.2 MB)
-│   │
-│   ├── data/                         # 🫁 Chest X-Ray Dataset (NORMAL / PNEUMONIA)
-│   ├── configs/                      # ⚙️ config.yaml (Central hyperparameter hub)
-│   ├── notebooks/                    # 📓 MedVision_AI.ipynb (Free Colab GPU training)
-│   ├── reports/                      # 📊 Generated confusion matrices & ROC curves
-│   ├── tests/                        # 🧪 Pytest unit tests (13/13 passing)
-│   └── venv/                         # 🐍 Python virtual environment
-└── frontend/
-    └── app.py                        # Root launcher (runs from root or MedVision-AI)
-```
+See **[README → Repository Structure](../README.md#-repository-structure)** for the current folder layout (single source of truth).
 
 ---
 
@@ -86,25 +46,25 @@ In clinical data, positive cases often outnumber negative cases:
 
 ## 🧠 3. Model Architectures & Weights
 
-### A. Pretrained ResNet-18 Transfer Learning (`models/resnet.py`)
+### A. Pretrained ResNet-18 Transfer Learning (`src/models/resnet.py`)
 - **Backbone**: ResNet-18 pretrained on 1.4 million ImageNet images.
 - **Skip Connections (Residual Blocks)**: Solves the vanishing gradient problem via $\mathcal{H}(x) = \mathcal{F}(x) + x$.
 - **Custom Classifier Head**: Replaces original 1000-class FC layer with:
   `Linear(512 -> 256) -> BatchNorm1d -> LeakyReLU(0.1) -> Dropout(0.4) -> Linear(256 -> 2)`
-- **Saved Weights**: `models/checkpoints/best_resnet18.pth` (~44.7 MB).
+- **Saved Weights**: `artifacts/checkpoints/best_resnet18.pth` (~44.7 MB).
 
-### B. Custom Baseline CNN (`models/cnn.py`)
+### B. Custom Baseline CNN (`src/models/cnn.py`)
 - **Architecture**: 4 Sequential Convolutional blocks built from scratch:
   - Block 1: `Conv2d(3 -> 32, 3x3) -> BatchNorm2d -> LeakyReLU -> MaxPool2d`
   - Block 2: `Conv2d(32 -> 64, 3x3) -> BatchNorm2d -> LeakyReLU -> MaxPool2d`
   - Block 3: `Conv2d(64 -> 128, 3x3) -> BatchNorm2d -> LeakyReLU -> MaxPool2d`
   - Block 4: `Conv2d(128 -> 256, 3x3) -> BatchNorm2d -> LeakyReLU -> MaxPool2d`
   - Global Average Pooling -> `Linear(256 -> 64) -> Dropout(0.5) -> Linear(64 -> 2)`.
-- **Saved Weights**: `models/checkpoints/best_cnn.pth` (~1.2 MB).
+- **Saved Weights**: `artifacts/checkpoints/best_cnn.pth` (~1.2 MB).
 
 ---
 
-## 🔍 4. Explainable AI: Grad-CAM (`backend/inference/gradcam.py`)
+## 🔍 4. Explainable AI: Grad-CAM (`src/inference/gradcam.py`)
 
 ### The "Black Box" Problem
 Traditional AI gives predictions without explanation. Doctors cannot accept a diagnosis without understanding *why*.
@@ -132,11 +92,11 @@ Open PowerShell in your project folder:
 Run either from the root or inside `MedVision-AI`:
 ```powershell
 # From root directory:
-streamlit run frontend/app.py
+streamlit run app.py
 
 # OR from MedVision-AI directory:
 cd MedVision-AI
-streamlit run frontend/app.py
+streamlit run app.py
 ```
 > The dashboard will automatically open at `http://localhost:8501`.
 
@@ -150,7 +110,7 @@ python -m pytest tests/test_model.py tests/test_inference.py -v
 2. Upload `MedVision-AI/notebooks/MedVision_AI.ipynb`.
 3. Set Runtime to **GPU (T4)**.
 4. Run all cells (~10 minutes).
-5. Download `best_resnet18.pth` and place it in `MedVision-AI/models/checkpoints/`.
+5. Download `best_resnet18.pth` and place it in `MedVision-AI/artifacts/checkpoints/`.
 
 ---
 

@@ -134,38 +134,7 @@ graph TD
 
 ## 5. Directory Structure Explained
 
-```text
-MedVision-AI/
-├── configs/
-│   └── config.yaml          # All global settings (hyperparameters, paths, thresholds)
-├── src/
-│   ├── data/
-│   │   ├── dataset.py       # PyTorch Dataset class, transforms, and augmentations
-│   │   └── dataloader.py    # Train, validation, test DataLoader builders
-│   ├── models/
-│   │   ├── cnn.py           # 4-block custom CNN architecture built from scratch
-│   │   └── resnet.py        # ResNet-18/50 transfer learning with custom head
-│   ├── training/
-│   │   └── trainer.py       # Training loop, validation, early stopping, checkpointing
-│   ├── inference/
-│   │   ├── predictor.py     # Image preprocessing & batch/single prediction
-│   │   └── gradcam.py       # Grad-CAM heatmap generation & image blending
-│   └── utils/
-│       ├── metrics.py       # Accuracy, Precision, Recall, F1, AUC, Confusion Matrix
-│       └── visualization.py # 6 publication-ready diagnostic plots
-├── tests/
-│   ├── test_model.py        # Model architecture & weight tests
-│   └── test_inference.py    # Inference pipeline unit tests
-├── notebooks/
-│   └── MedVision_AI.ipynb   # Complete Google Colab GPU training notebook
-├── artifacts/               # Saved model weights (.pth) & training checkpoints
-├── reports/                 # Saved evaluation charts & classification reports
-├── app.py                   # Streamlit web application
-├── run_pipeline.py          # Command-line training pipeline script
-├── requirements.txt         # Pinned Python package dependencies
-├── info.md                  # Comprehensive project handbook & viva guide
-└── venv/                    # Isolated Python virtual environment
-```
+See **[README → Repository Structure](../README.md#-repository-structure)** for the current folder layout (single source of truth).
 
 ---
 

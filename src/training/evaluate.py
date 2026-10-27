@@ -19,8 +19,6 @@ import numpy as np
 from pathlib import Path
 from torch.utils.data import DataLoader
 
-from sklearn.metrics import roc_curve, auc
-
 from src.utils.metrics import compute_metrics, print_metrics
 from src.utils.visualization import (
     plot_confusion_matrix,
@@ -103,6 +101,7 @@ def evaluate_model(
 
         # ── ROC Curve ──
         if metrics["auc_roc"] is not None:
+            from sklearn.metrics import roc_curve   # lazy: keeps sklearn/pandas out of the web server
             fpr, tpr, _ = roc_curve(all_labels, all_probs)
             plot_roc_curve(
                 fpr, tpr,
@@ -148,15 +147,8 @@ def load_model_from_checkpoint(
         # Fallback: the checkpoint IS the state dict
         state_dict = checkpoint
 
-    try:
-        model.load_state_dict(state_dict)
-    except RuntimeError as e:
-        print(f"[Load] Warning: Strict state_dict load failed: {e}")
-        try:
-            model.load_state_dict(state_dict, strict=False)
-            print("[Load] Loaded compatible weights with strict=False.")
-        except Exception as e2:
-            print(f"[Load] Fallback to initialized model weights: {e2}")
+    # Strict on purpose: a mismatched checkpoint must fail loudly, not serve random weights
+    model.load_state_dict(state_dict)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
