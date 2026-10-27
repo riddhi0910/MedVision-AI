@@ -258,4 +258,47 @@ Agar teacher bole: *"Mujhe confusion matrix dikhao, accuracy curves dikhao, proo
 
 ---
 
+## 🎯 11. Medical Evaluation Metrics (Precision, Recall, Specificity, F1-Score, AUC-ROC)
+
+Teacher ka sabse common viva question: *"Medical AI me sirf Accuracy dekhna kaafi kyun nahi hota? Precision aur Recall kya hain?"*
+
+### ⚠️ Golden Rule (Teacher ko yeh line bolni hai):
+> *"Sir, Medical domain me sirf **Accuracy** misleading hoti hai. Agar ek dataset me 75% pneumonia ke patients hain aur model sabko aankh band karke Pneumonia bol de, tab bhi uski accuracy 75% dikhegi, lekin wo healthy logon ko 0% detect karega! Isliye hume **Recall (Sensitivity)** aur **Specificity** dekhna mandatory hota hai."*
+
+---
+
+### 📊 Complete Benchmark Comparison Table:
+
+| Metric | Formula | Baseline CNN | ResNet-18 | Aasan Bhasha me Matlab (Doctor's View) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Accuracy** | $\frac{TP + TN}{Total}$ | **94.7%** | **99.1%** | Kul milakar kitne predictions sahi the. |
+| **Recall (Sensitivity)** | $\frac{TP}{TP + FN}$ | **92.7%** | **98.6%** | Asli me bimaar logon me se kitno ko AI ne pakda? *(Sabse important!)* |
+| **Specificity** | $\frac{TN}{TN + FP}$ | **96.7%** | **99.5%** | Healthy logon ko kitna accurately healthy bola? |
+| **Precision (PPV)** | $\frac{TP}{TP + FP}$ | **96.6%** | **99.5%** | Jab AI ne 'Pneumonia' bola, tab wo kitni baar sach nikla? |
+| **F1-Score** | $2 \cdot \frac{P \cdot R}{P + R}$ | **0.946** | **0.990** | Precision aur Recall ka balanced harmonic mean. |
+| **ROC-AUC** | Area Under Curve | **0.972** | **0.998** | Model ki overall discrimination ability across all thresholds. |
+
+---
+
+### 🧠 Har Metric Ka Deep Explanation (Viva Ready):
+
+#### 1. Recall (Sensitivity) — *Doctor's Top Priority*
+- **Matlab:** Agar hospital me 100 pneumonia ke patients aaye, toh AI ne unme se 98.6 ko pakad liya, sirf 1.4 miss hue.
+- **Kyun important hai?** Agar Recall kam hua, toh patient ko pneumonia hone ke bawajood AI use "Normal" bol dega (**False Negative**), aur bina ilaaj ke patient ki halat critical ho sakti hai.
+
+#### 2. Specificity (True Negative Rate)
+- **Matlab:** Agar 100 healthy log test karane aaye, toh AI ne 99.5 logon ko accurately "Normal" bola, bina faltu dawa ya dar ke.
+- **Kyun important hai?** High specificity unnecessary antibiotics aur patient ki mental anxiety ko rokti hai.
+
+#### 3. Precision (Positive Predictive Value)
+- **Matlab:** Jab AI alarm bajata hai ki *"Pneumonia Detected"*, toh 99.5% chances hain ki report sach hai.
+
+#### 4. F1-Score
+- Yeh tab dekha jata hai jab dataset me class imbalance ho. ResNet-18 ka F1 score **0.990** yeh prove karta hai ki precision aur recall dono ek saath peak performance par hain.
+
+#### 5. ROC-AUC (0.998 for ResNet-18)
+- Perfect model ka AUC score 1.0 hota hai. Hamara ResNet-18 **0.998** score kar raha hai, jo state-of-the-art medical classification standard hai.
+
+---
+
 🎉 **All the best for your presentation! Confident rahein, aapka project technologically aur clinically complete hai.**
