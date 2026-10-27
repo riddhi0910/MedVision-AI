@@ -1,0 +1,1386 @@
+/* ==========================================================================
+   MedVision PACS — Diagnostic Radiograph AI Workstation
+   Professional Clinical Side-by-Side Interface
+   ========================================================================== */
+
+:root {
+  /* Medical Slate Palette */
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8fafc;
+  --border-main: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  
+  --pacs-dark: #090d16;
+  --pacs-hud: rgba(226, 232, 240, 0.85);
+  --pacs-cyan: #0284c7;
+  --pacs-teal: #0d9488;
+
+  /* Triage Colors */
+  --triage-pneu-bg: #fef2f2;
+  --triage-pneu-border: #fca5a5;
+  --triage-pneu-text: #b91c1c;
+  --triage-pneu-bar: #ef4444;
+
+  --triage-norm-bg: #f0fdf4;
+  --triage-norm-border: #86efac;
+  --triage-norm-text: #15803d;
+  --triage-norm-bar: #22c55e;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  --font-heading: 'Outfit', var(--font-sans);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 9999px;
+}
+
+/* Base Workstation Setup */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body.medical-workstation {
+  background-color: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Top PACS Navigation Bar ──────────────────────────────────────────────── */
+.pacs-navbar {
+  height: 42px;
+  background: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+
+.hospital-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hospital-cross {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  background: var(--pacs-cyan);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.hospital-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.hospital-title .highlight {
+  color: #38bdf8;
+}
+
+.hospital-sub {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  display: block;
+}
+
+/* Navigation HUD */
+.nav-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-item {
+  display: flex;
+  gap: 5px;
+}
+
+.hud-lbl {
+  color: var(--text-dim);
+}
+
+.hud-val {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.hud-status {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.model-pill {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+}
+
+.btn-clear {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-clear:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* ── Main Workspace Container (100vh Single-Screen Fit) ───────────────────── */
+.workspace-container {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 6px 14px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── TOP CONTROL & INPUT RIBBON (Ultra-compact 38px toolbar) ──────────────── */
+.control-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  height: 38px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.input-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px dashed var(--border-main);
+  border-radius: var(--radius-xs);
+  padding: 2px 8px;
+  background: var(--bg-subtle);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.input-strip:hover, .input-strip.dragover {
+  border-color: var(--pacs-cyan);
+  background: #f0fdfa;
+}
+
+.strip-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--pacs-cyan);
+  letter-spacing: 0.05em;
+}
+
+.strip-drop-hint {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Hidden File Input */
+.file-input-hidden {
+  display: none !important;
+}
+
+.btn-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-browse {
+  background: var(--pacs-cyan);
+  color: #fff;
+}
+
+.btn-browse:hover {
+  background: #0369a1;
+}
+
+.btn-paste {
+  background: #ffffff;
+  border: 1px solid var(--pacs-teal);
+  color: var(--pacs-teal);
+}
+
+.btn-paste:hover {
+  background: var(--pacs-teal);
+  color: #ffffff;
+}
+
+/* Cases Strip */
+.cases-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.cases-strip .strip-tag {
+  color: var(--text-muted);
+}
+
+.sample-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.case-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: #ffffff;
+  border: 1px solid var(--border-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.case-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.chip-pneu {
+  background: var(--triage-pneu-bg);
+  color: var(--triage-pneu-text);
+  border-color: var(--triage-pneu-border);
+}
+
+.chip-pneu:hover {
+  background: #fee2e2;
+}
+
+.chip-norm {
+  background: var(--triage-norm-bg);
+  color: var(--triage-norm-text);
+  border-color: var(--triage-norm-border);
+}
+
+.chip-norm:hover {
+  background: #dcfce7;
+}
+
+/* Architecture Strip */
+.model-strip {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.model-segmented-switch {
+  display: flex;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-xs);
+  padding: 1.5px;
+}
+
+.seg-btn {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.seg-btn.active {
+  background: #ffffff;
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── UPPER SIDE: Diagnostic Detection & Triage Bar (38px height) ──────────── */
+.triage-detection-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  padding: 3px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 38px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.triage-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.triage-status-pill {
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 2px 10px;
+  border-radius: var(--radius-xs);
+  background: #e2e8f0;
+  color: var(--text-primary);
+  border: 1.5px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+.triage-status-pill.pneu {
+  background: var(--triage-pneu-bg);
+  color: var(--triage-pneu-text);
+  border-color: var(--triage-pneu-border);
+}
+
+.triage-status-pill.norm {
+  background: var(--triage-norm-bg);
+  color: var(--triage-norm-text);
+  border-color: var(--triage-norm-border);
+}
+
+.triage-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.triage-icd {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.triage-telemetry {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+}
+
+.triage-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.confidence-box {
+  text-align: right;
+}
+
+.conf-title {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.conf-number {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.prob-progress-container {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prob-header-text {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--text-secondary);
+}
+
+.prob-bar-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  display: flex;
+}
+
+.prob-bar-normal {
+  background: var(--triage-norm-bar);
+  transition: width 0.4s ease;
+}
+
+.prob-bar-pneu {
+  background: var(--triage-pneu-bar);
+  transition: width 0.4s ease;
+}
+
+/* ── CENTER: Side-by-Side Diagnostic Imaging Viewport (Dynamic Fill) ───────── */
+.imaging-side-by-side-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.radiology-monitor {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.monitor-header {
+  height: 30px;
+  background: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.monitor-title-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monitor-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: #334155;
+  color: #f8fafc;
+}
+
+.monitor-tag.tag-ai {
+  background: var(--pacs-cyan);
+}
+
+.monitor-title {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+}
+
+.monitor-tools {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mtool-btn {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.mtool-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.saliency-mini-legend {
+  display: flex;
+  gap: 5px;
+}
+
+.leg-chip {
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.leg-red {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.leg-blue {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Chamber Box */
+.chamber-box {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  aspect-ratio: auto;
+  max-height: none;
+  background: var(--pacs-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.chamber-empty {
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.reticle-svg {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+
+.chamber-empty p {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-family: var(--font-mono);
+}
+
+/* Chamber HUD Overlays */
+.chamber-hud {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--pacs-hud);
+  pointer-events: none;
+  z-index: 20;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px #000;
+}
+
+.hud-tl {
+  top: 8px;
+  left: 10px;
+}
+
+.hud-tr {
+  top: 8px;
+  right: 10px;
+  text-align: right;
+}
+
+.chamber-marker {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.marker-r {
+  right: 12px;
+}
+
+.marker-l {
+  left: 12px;
+}
+
+/* Images in Chamber (Fit inside without stretching or overflow) */
+.chamber-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+}
+
+.cam-stack-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.chamber-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.layer-base {
+  z-index: 5;
+}
+
+.layer-cam {
+  z-index: 10;
+  opacity: 0.50;
+  transition: opacity 0.05s ease-out;
+}
+
+/* Monitor Footer & Controls */
+.monitor-footer {
+  height: 26px;
+  padding: 0 10px;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.mfoot-desc {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.monitor-footer-controls {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.saliency-scale-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+.scale-gradient {
+  width: 60px;
+  height: 5px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #000080, #0000ff, #00ffff, #ffff00, #ff0000, #800000);
+}
+
+.blend-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.clean-range {
+  width: 75px;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.clean-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pacs-cyan);
+  border: 1.5px solid #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.blend-quick-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.qbtn {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: #ffffff;
+  border: 1px solid var(--border-main);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.qbtn:hover {
+  background: var(--bg-subtle);
+  border-color: #94a3b8;
+}
+
+.active-qbtn {
+  background: var(--pacs-cyan);
+  color: #fff;
+  border-color: var(--pacs-cyan);
+}
+
+/* ── BOTTOM: Structured Radiology Impressions & Download Report (105px) ──── */
+.impressions-and-report-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  height: 105px;
+  min-height: 105px;
+  max-height: 105px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.report-content-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 0.9fr;
+  gap: 10px;
+  height: 100%;
+  align-items: stretch;
+}
+
+.rep-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rep-sub-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.rep-icon {
+  font-size: 0.85rem;
+}
+
+.rep-findings-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.rep-findings-list li {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  position: relative;
+  padding-left: 10px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rep-findings-list li::before {
+  content: '▪';
+  position: absolute;
+  left: 0;
+  color: var(--pacs-cyan);
+  font-size: 0.75rem;
+}
+
+.rep-tech-tag {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rep-impression-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--pacs-cyan);
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  color: var(--text-primary);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.rep-col-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-download-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.3);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-download-pdf:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+}
+
+.action-sub-row {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-sub-act {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  border: 1px solid var(--border-main);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: all 0.12s ease;
+}
+
+.btn-sub-act:hover {
+  background: var(--bg-subtle);
+  border-color: #94a3b8;
+}
+
+/* ── Professional Clinical Toast Notifications (Zero blocking native popups) ── */
+.toast-container {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.pacs-toast {
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 420px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pacs-toast.toast-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.toast-error .toast-icon {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.toast-warning .toast-icon {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.toast-info .toast-icon {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.toast-close:hover {
+  color: #fff;
+}
+
+/* ── FORMAL RADIOLOGY CONSULTATION REPORT (Printed on A4 PDF Export) ── */
+.print-only-report {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html, body.medical-workstation {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .pacs-navbar,
+  .workspace-container {
+    display: none !important;
+  }
+
+  .print-only-report {
+    display: block !important;
+    width: 100% !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #0f172a;
+    margin-bottom: 8px;
+  }
+
+  .print-hospital-name {
+    font-family: var(--font-heading);
+    font-size: 13pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+
+  .print-dept-name {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #0284c7;
+    margin-bottom: 1px;
+  }
+
+  .print-center-meta {
+    font-size: 7pt;
+    color: #64748b;
+  }
+
+  .print-doc-id {
+    text-align: right;
+  }
+
+  .print-badge-consult {
+    font-family: var(--font-mono);
+    font-size: 7pt;
+    font-weight: 700;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 3px;
+  }
+
+  .print-ref-row, .print-ref-date {
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    color: #334155;
+  }
+
+  .print-demographics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px 12px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+  }
+
+  .demo-cell {
+    display: flex;
+    gap: 4px;
+    font-size: 7.5pt;
+  }
+
+  .demo-lbl {
+    font-family: var(--font-mono);
+    color: #64748b;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .demo-val {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .print-triage {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1.5px solid #cbd5e1;
+    background: #f1f5f9;
+  }
+
+  .print-triage.pneu {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+  }
+
+  .print-triage.norm {
+    background: #f0fdf4 !important;
+    border-color: #10b981 !important;
+  }
+
+  .print-triage-label {
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .print-triage-verdict {
+    font-family: var(--font-heading);
+    font-size: 11pt;
+    font-weight: 800;
+  }
+
+  .print-triage.pneu .print-triage-verdict {
+    color: #b91c1c !important;
+  }
+
+  .print-triage.norm .print-triage-verdict {
+    color: #15803d !important;
+  }
+
+  .print-triage-scores {
+    display: flex;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 8pt;
+  }
+
+  .print-image-plate {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .print-img-box {
+    text-align: center;
+  }
+
+  .print-img-frame {
+    width: 100%;
+    height: 165px;
+    background: #000000;
+    border: 1px solid #334155;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .print-img-frame img {
+    max-height: 165px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .print-img-caption {
+    display: block;
+    font-size: 7pt;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  .print-report-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .print-sec-title {
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #0284c7;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1px;
+  }
+
+  .print-text {
+    font-size: 7.5pt;
+    color: #1e293b;
+    line-height: 1.35;
+  }
+
+  .print-bullets {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .print-bullets li {
+    font-size: 7.5pt;
+    color: #1e293b;
+    position: relative;
+    padding-left: 10px;
+    line-height: 1.3;
+  }
+
+  .print-bullets li::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: #0284c7;
+  }
+
+  .print-impression-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-left: 3px solid #0284c7;
+    padding: 5px 8px;
+    font-size: 7.5pt;
+    line-height: 1.35;
+    color: #0f172a;
+    font-weight: 500;
+  }
+
+  .print-footer-signoff {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 6px;
+    border-top: 1px solid #cbd5e1;
+    margin-top: 4px;
+  }
+
+  .signoff-left {
+    max-width: 60%;
+  }
+
+  .signoff-statement {
+    font-size: 6.5pt;
+    color: #64748b;
+    line-height: 1.25;
+    margin-bottom: 2px;
+  }
+
+  .signoff-disclaimer {
+    font-size: 6pt;
+    color: #94a3b8;
+    font-family: var(--font-mono);
+  }
+
+  .signoff-right {
+    text-align: right;
+  }
+
+  .signature-line {
+    width: 140px;
+    border-bottom: 1px solid #0f172a;
+    margin-bottom: 3px;
+    margin-left: auto;
+  }
+
+  .signature-name {
+    font-family: var(--font-heading);
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .signature-title {
+    font-size: 7pt;
+    color: #475569;
+  }
+
+  .signature-license {
+    font-size: 6pt;
+    color: #64748b;
+    font-family: var(--font-mono);
+  }
+}

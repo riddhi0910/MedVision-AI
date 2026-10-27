@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVision PACS — Diagnostic Radiograph AI Workstation</title>
+  <meta name="description" content="Clinical radiograph evaluation workstation featuring side-by-side Grad-CAM interpretability and formal radiology reporting.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="medical-workstation">
+
+  <!-- ── Top PACS Navigation Bar ────────────────────────────────────────────── -->
+  <header class="pacs-navbar">
+    <div class="nav-left">
+      <div class="hospital-badge">
+        <div class="hospital-cross">+</div>
+        <div class="hospital-text">
+          <span class="hospital-title">NAGPUR CITY <span class="highlight">HOSPITAL</span></span>
+          <span class="hospital-sub">Dept of Diagnostic Radiology • MedVision PACS v2.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Clinical HUD -->
+    <div class="nav-hud">
+      <div class="hud-item"><span class="hud-lbl">STUDY:</span> <span class="hud-val" id="hudStudyId">#CXR-2026-9812</span></div>
+      <div class="hud-divider"></div>
+      <div class="hud-item"><span class="hud-lbl">MODALITY:</span> <span class="hud-val">DX CHEST (FRONTAL)</span></div>
+      <div class="hud-divider"></div>
+      <div class="hud-item"><span class="hud-lbl">PATIENT:</span> <span class="hud-val">ANONYMIZED</span></div>
+      <div class="hud-divider"></div>
+      <div class="hud-item"><span class="hud-status" id="apiStatusText">● AI ENGINE ONLINE</span></div>
+    </div>
+
+    <div class="nav-right">
+      <div class="model-pill" id="activeModelBadge">ResNet-18 Active (96.4%)</div>
+      <button class="btn-clear" onclick="resetViewer()">New Study</button>
+    </div>
+  </header>
+
+  <!-- ── Main Workspace (Fit on 1 Screen / 100vh) ────────────────────────── -->
+  <main class="workspace-container">
+    
+    <!-- Top Control Bar (High-density single-line clinical toolbar) -->
+    <section class="control-ribbon">
+      <!-- Input Group -->
+      <div class="input-strip" id="dropzone">
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/jpg" class="file-input-hidden">
+        <span class="strip-tag">INPUT</span>
+        <button type="button" class="btn-act btn-browse" onclick="document.getElementById('fileInput').click()">
+          📂 Browse File
+        </button>
+        <button type="button" class="btn-act btn-paste" id="pasteBtn" onclick="pasteFromClipboard(event)">
+          📋 Paste (Ctrl+V)
+        </button>
+        <span class="strip-drop-hint">or drop image</span>
+      </div>
+
+      <!-- Quick Test Cases -->
+      <div class="cases-strip">
+        <span class="strip-tag">CASES</span>
+        <div class="sample-chips-row" id="sampleChips">
+          <button class="case-chip chip-pneu" onclick="loadSample('pneumonia_000011.jpeg', 'PNEUMONIA')">🔴 Case 01</button>
+          <button class="case-chip chip-pneu" onclick="loadSample('pneumonia_000031.jpeg', 'PNEUMONIA')">🔴 Case 02</button>
+          <button class="case-chip chip-norm" onclick="loadSample('normal_000005.jpeg', 'NORMAL')">🟢 Case 03</button>
+          <button class="case-chip chip-norm" onclick="loadSample('normal_000009.jpeg', 'NORMAL')">🟢 Case 04</button>
+          <button class="case-chip chip-norm" onclick="loadSample('normal_000010.jpeg', 'NORMAL')">🟢 Case 05</button>
+          <button class="case-chip chip-pneu" onclick="loadSample('pneumonia_000021.jpeg', 'PNEUMONIA')">🔴 Case 06</button>
+        </div>
+      </div>
+
+      <!-- Architecture Switch -->
+      <div class="model-strip">
+        <div class="model-segmented-switch">
+          <button class="seg-btn active" id="btnResnet" onclick="selectModel('resnet18')">
+            ResNet-18 (96.4%)
+          </button>
+          <button class="seg-btn" id="btnCnn" onclick="selectModel('cnn')">
+            Baseline CNN (94.7%)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UPPER SIDE: Diagnostic Detection & Triage Bar ──────────────────────── -->
+    <section class="triage-detection-bar" id="detectionBar">
+      <div class="triage-left">
+        <div class="triage-status-pill" id="verdictPill">AWAITING STUDY</div>
+        <div class="triage-meta-info">
+          <span class="triage-icd" id="triageIcd">ICD-10: PENDING EXAMINATION</span>
+          <span class="triage-telemetry" id="triageTelemetry">Neural Backbone: ResNet-18 • Ready</span>
+        </div>
+      </div>
+
+      <div class="triage-right">
+        <div class="confidence-box">
+          <div class="conf-title">CONFIDENCE</div>
+          <div class="conf-number" id="confidenceNumber">--%</div>
+        </div>
+        <div class="prob-progress-container">
+          <div class="prob-header-text">
+            <span>Normal: <strong id="probNormalText">--%</strong></span>
+            <span>Pneumonia: <strong id="probPneuText">--%</strong></span>
+          </div>
+          <div class="prob-bar-track">
+            <div class="prob-bar-normal" id="probFillNormal" style="width: 50%;"></div>
+            <div class="prob-bar-pneu" id="probFillPneu" style="width: 50%;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CENTER: Side-by-Side Diagnostic Imaging Viewport ───────────────────── -->
+    <section class="imaging-side-by-side-grid">
+      
+      <!-- LEFT MONITOR: Input Radiograph (Raw DX) -->
+      <div class="radiology-monitor">
+        <div class="monitor-header">
+          <div class="monitor-title-box">
+            <span class="monitor-tag">FIGURE 1</span>
+            <span class="monitor-title">INPUT RADIOGRAPH (RAW DX)</span>
+          </div>
+          <div class="monitor-tools">
+            <button class="mtool-btn" onclick="toggleInvert()" title="Invert Grayscale">Invert LUT</button>
+            <button class="mtool-btn" onclick="resetZoom()" title="Reset Viewport">Reset</button>
+          </div>
+        </div>
+
+        <div class="chamber-box" id="chamberRaw">
+          <div class="chamber-hud hud-tl">PA ERECT CHEST<br><span id="hudRawMeta">DE-IDENTIFIED</span></div>
+          <div class="chamber-hud hud-tr">WINDOW: LUNG<br>ZOOM: 100%</div>
+          <div class="chamber-marker marker-r">R</div>
+          <div class="chamber-marker marker-l">L</div>
+
+          <div class="chamber-empty" id="emptyRaw">
+            <div class="reticle-svg">🩻</div>
+            <p>Awaiting radiograph input</p>
+          </div>
+
+          <img id="viewOriginal" class="chamber-img" alt="Input Chest Radiograph">
+        </div>
+
+        <div class="monitor-footer">
+          <span class="mfoot-desc">Unprocessed frontal thoracic radiograph (224×224 normalized).</span>
+        </div>
+      </div>
+
+      <!-- RIGHT MONITOR: Output Radiograph with Grad-CAM Heatmap -->
+      <div class="radiology-monitor">
+        <div class="monitor-header">
+          <div class="monitor-title-box">
+            <span class="monitor-tag tag-ai">FIGURE 2</span>
+            <span class="monitor-title">AI SALIENCY MAP (GRAD-CAM OUTPUT)</span>
+          </div>
+          <div class="monitor-tools">
+            <div class="saliency-mini-legend">
+              <span class="leg-chip leg-red">■ High Attention</span>
+              <span class="leg-chip leg-blue">■ Baseline</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chamber-box" id="chamberCam">
+          <div class="chamber-hud hud-tl">GRAD-CAM ACTIVATION<br><span id="hudCamLatency">LATENCY: --ms</span></div>
+          <div class="chamber-hud hud-tr">TARGET: LAYER4<br>COLORMAP: JET</div>
+          <div class="chamber-marker marker-r">R</div>
+          <div class="chamber-marker marker-l">L</div>
+
+          <div class="chamber-empty" id="emptyCam">
+            <div class="reticle-svg">🔬</div>
+            <p>Awaiting AI inference</p>
+          </div>
+
+          <div class="cam-stack-container" id="camStackContainer">
+            <img id="viewOriginalUnder" class="chamber-layer layer-base" alt="Original Underlay">
+            <img id="viewHeatmap" class="chamber-layer layer-cam" alt="Grad-CAM Overlay">
+          </div>
+        </div>
+
+        <div class="monitor-footer monitor-footer-controls">
+          <div class="saliency-scale-bar">
+            <span>0.0</span>
+            <div class="scale-gradient"></div>
+            <span>1.0</span>
+          </div>
+
+          <div class="blend-slider-row">
+            <span class="slider-lbl">Blend: <strong id="sliderVal">50%</strong></span>
+            <input type="range" id="opacitySlider" min="0" max="100" value="50" class="clean-range">
+            <div class="blend-quick-btns">
+              <button class="qbtn" onclick="setOpacity(0)">0%</button>
+              <button class="qbtn active-qbtn" onclick="setOpacity(50)">50%</button>
+              <button class="qbtn" onclick="setOpacity(100)">100%</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── BOTTOM: Structured Radiology Impressions & Download Report ────────── -->
+    <section class="impressions-and-report-card">
+      <div class="report-content-grid">
+        <!-- Col 1: Analytical Findings -->
+        <div class="rep-column rep-col-findings">
+          <div class="rep-sub-head">
+            <span class="rep-icon">📋</span>
+            <span>ACR RADIOLOGIC FINDINGS</span>
+          </div>
+          <ul class="rep-findings-list" id="findingsList">
+            <li>Awaiting patient radiograph input...</li>
+          </ul>
+          <div class="rep-tech-tag" id="repTechnique">Deep Transfer Learning (ResNet-18) with Grad-CAM.</div>
+        </div>
+
+        <!-- Col 2: Diagnostic Impression -->
+        <div class="rep-column rep-col-impression">
+          <div class="rep-sub-head">
+            <span class="rep-icon">🩺</span>
+            <span>DIAGNOSTIC IMPRESSION</span>
+          </div>
+          <div class="rep-impression-box" id="impressionSummary">
+            Awaiting examination input to formulate diagnostic impressions.
+          </div>
+        </div>
+
+        <!-- Col 3: Prominent Download & Attestation Actions -->
+        <div class="rep-column rep-col-actions">
+          <button class="btn-download-pdf" onclick="window.print()">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>Download Official Report (PDF)</span>
+          </button>
+          <div class="action-sub-row">
+            <button class="btn-sub-act" onclick="copyImpressionText()">📋 Copy Text</button>
+            <button class="btn-sub-act" onclick="signOffStudy()">✓ Attest & Sign-Off</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── FORMAL RADIOLOGY CONSULTATION REPORT (Printed on A4 PDF Export) ── -->
+  <div class="print-only-report" id="formalRadiologyReport">
+    <!-- Hospital Letterhead -->
+    <div class="print-header">
+      <div class="print-brand-left">
+        <h1 class="print-hospital-name">NAGPUR CITY HOSPITAL</h1>
+        <p class="print-dept-name">Department of Diagnostic Radiology & Pulmonary AI Division</p>
+        <p class="print-center-meta">Nagpur, Maharashtra • NABH Accredited • DICOM Conformance Level 4</p>
+      </div>
+      <div class="print-doc-id">
+        <div class="print-badge-consult">CLINICAL CONSULTATION REPORT</div>
+        <div class="print-ref-row">ACCESSION: <span id="printAccession">CXR-2026-9812</span></div>
+        <div class="print-ref-date">DATE: <span id="printDate">2026-10-27</span></div>
+      </div>
+    </div>
+
+    <!-- Patient Demographics Table -->
+    <div class="print-demographics">
+      <div class="demo-cell"><span class="demo-lbl">PATIENT NAME:</span> <span class="demo-val">DE-IDENTIFIED (RESEARCH)</span></div>
+      <div class="demo-cell"><span class="demo-lbl">STUDY MRN:</span> <span class="demo-val" id="printMrn">#CXR-9812</span></div>
+      <div class="demo-cell"><span class="demo-lbl">EXAMINATION:</span> <span class="demo-val">DX Chest Frontal (PA/AP)</span></div>
+      <div class="demo-cell"><span class="demo-lbl">MODALITY:</span> <span class="demo-val">Digital Radiography</span></div>
+      <div class="demo-cell"><span class="demo-lbl">AI ARCHITECTURE:</span> <span class="demo-val" id="printModelName">ResNet-18 Deep Residual</span></div>
+      <div class="demo-cell"><span class="demo-lbl">REFERRING PHYSICIAN:</span> <span class="demo-val">Pulmonary Medicine Unit</span></div>
+    </div>
+
+    <!-- Triage Alert Banner -->
+    <div class="print-triage" id="printTriageBox">
+      <div class="print-triage-main">
+        <span class="print-triage-label">PRIMARY DIAGNOSIS:</span>
+        <span class="print-triage-verdict" id="printVerdict">PNEUMONIA DETECTED</span>
+      </div>
+      <div class="print-triage-scores">
+        <span class="print-triage-conf">CONFIDENCE: <strong id="printConfidence">99.8%</strong></span>
+        <span class="print-triage-icd" id="printIcd">ICD-10: J18.9</span>
+      </div>
+    </div>
+
+    <!-- Dual Radiographic Plate (Side-by-Side in Print) -->
+    <div class="print-image-plate">
+      <div class="print-img-box">
+        <div class="print-img-frame">
+          <img id="printImgRaw" src="" alt="Raw Radiograph">
+        </div>
+        <span class="print-img-caption">Figure 1: Patient Frontal Chest Radiograph (Raw DX)</span>
+      </div>
+      <div class="print-img-box">
+        <div class="print-img-frame">
+          <img id="printImgCam" src="" alt="Grad-CAM Saliency Map">
+        </div>
+        <span class="print-img-caption">Figure 2: Grad-CAM Neural Activation Map (Focal Opacities)</span>
+      </div>
+    </div>
+
+    <!-- ACR Structured Impressions -->
+    <div class="print-report-body">
+      <div class="print-section">
+        <h3 class="print-sec-title">CLINICAL INDICATION & TECHNIQUE</h3>
+        <p class="print-text">Frontal thoracic radiograph evaluated for acute airspace infiltration, focal parenchymal consolidation, and pulmonary infectious disease. Analysis conducted via deep convolutional residual feature extraction and Gradient-weighted Class Activation Mapping (Grad-CAM).</p>
+      </div>
+
+      <div class="print-section">
+        <h3 class="print-sec-title">ANALYTICAL RADIOLOGIC FINDINGS</h3>
+        <ul class="print-bullets" id="printFindingsList">
+          <li>Awaiting examination...</li>
+        </ul>
+      </div>
+
+      <div class="print-section">
+        <h3 class="print-sec-title">FINAL RADIOLOGIC IMPRESSION</h3>
+        <div class="print-impression-box" id="printImpressionBox">
+          Awaiting evaluation...
+        </div>
+      </div>
+    </div>
+
+    <!-- Radiologist Attestation & Sign-off -->
+    <div class="print-footer-signoff">
+      <div class="signoff-left">
+        <p class="signoff-statement">Attestation: The deep learning algorithmic findings and Grad-CAM saliency distributions have been correlated with radiologic presentation. Final clinical diagnosis remains subject to clinical auscultation and physician oversight.</p>
+        <p class="signoff-disclaimer">Nagpur City Hospital • MedVision Clinical PACS v2.5 • Confidential Consultation Report</p>
+      </div>
+      <div class="signoff-right">
+        <div class="signature-line"></div>
+        <p class="signature-name">Dr. R. Somani, MD</p>
+        <p class="signature-title">Consultant Diagnostic Radiologist</p>
+        <p class="signature-license">Board Certified Radiologist • Reg #MMC-49210</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

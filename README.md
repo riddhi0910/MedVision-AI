@@ -27,43 +27,52 @@ Always consult a qualified radiologist or physician for medical advice.
 
 ---
 
+## 📚 Documentation & Study Hub
+
+| Guide | Description |
+| :--- | :--- |
+| 🚀 **[docs/start.md](docs/start.md)** | **Project Startup Guide**: One-click run commands for PACS (8000) and Streamlit (8501). |
+| 📖 **[docs/study.md](docs/study.md)** | **Study Masterclass**: From-scratch textbook on CXR, CNNs, ResNet-18, Grad-CAM math & viva Q&A. |
+| 📘 **[docs/learning.md](docs/learning.md)** | **Curriculum Roadmap**: 6-week progressive study plan and learning philosophy. |
+| 🔬 **[docs/info.md](docs/info.md)** | **Technical Specifications**: Pipeline internals, hyperparameters, and dataset stats. |
+| 🗺️ **[docs/roadmap.md](docs/roadmap.md)** | **Development Blueprint**: Architectural milestones and future clinical roadmap. |
+
+---
+
 ## 📁 Project Structure
 
-```
+```text
 MedVision-AI/
-├── app.py                     # Streamlit web application
-├── run_pipeline.py            # End-to-end training pipeline
-├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-├── .gitignore                 # Git ignore rules
-├── .env.example               # Environment variable template
-├── configs/
-│   └── config.yaml            # All hyperparameters and settings
-├── src/
-│   ├── data/
-│   │   ├── dataset.py         # Dataset loading, validation, DataLoaders
-│   │   └── preprocessing.py   # Image transforms for train/val/test/inference
-│   ├── models/
-│   │   ├── cnn.py             # Baseline CNN architecture
-│   │   └── resnet.py          # ResNet-18 transfer learning model
-│   ├── training/
-│   │   ├── train.py           # Training loop with early stopping
-│   │   └── evaluate.py        # Test-set evaluation and metric saving
-│   ├── inference/
-│   │   ├── predict.py         # Single-image inference pipeline
-│   │   └── gradcam.py         # Grad-CAM explainability
-│   └── utils/
-│       ├── config_loader.py   # YAML + .env config loading
-│       ├── metrics.py         # All classification metrics
-│       └── visualization.py   # Plotting helpers
-├── notebooks/
-│   └── MedVision_AI.ipynb     # Google Colab training notebook
-├── tests/
-│   ├── test_model.py          # Model architecture unit tests
-│   └── test_inference.py      # Inference pipeline unit tests
-├── artifacts/
-│   └── checkpoints/           # Saved model weights (not committed)
-└── reports/                   # Generated charts and metrics (not committed)
+├── backend/                   # FastAPI backend server & inference engine (Port 8000)
+│   └── server.py              # ASGI application, endpoints & in-memory image streaming
+├── frontend/                  # Clinical Diagnostic PACS Workstation
+│   └── public/                # 100vh single-screen PACS UI (index.html, style.css, app.js)
+├── models/                    # Model definitions & trained weights
+│   ├── checkpoints/           # Saved PyTorch weights (best_resnet18.pth, best_cnn.pth)
+│   ├── cnn.py                 # Custom 4-block CNN architecture
+│   └── resnet.py              # Transfer learning ResNet-18 architecture
+├── docs/                      # Documentation & study masterclass
+│   ├── start.md               # Quick startup guide & command cheat sheet
+│   ├── study.md               # Comprehensive from-scratch master textbook guide
+│   ├── learning.md            # 6-week curriculum & viva prep roadmap
+│   ├── info.md                # Technical specifications & project overview
+│   └── roadmap.md             # Development architecture blueprint
+├── src/                       # Core Python modular library
+│   ├── data/                  # Dataset loader & image transformations
+│   ├── models/                # PyTorch neural network modules
+│   ├── training/              # Training loop, evaluation & device management
+│   ├── inference/             # Model inference & Grad-CAM engine
+│   └── utils/                 # Config loader, metrics & visualization
+├── configs/                   # Configuration
+│   └── config.yaml            # Hyperparameters, paths & model thresholds
+├── data/                      # Dataset splits (NORMAL / PNEUMONIA)
+├── notebooks/                 # Google Colab training & evaluation notebooks
+├── scripts/                   # Data balancing, physical splitting & utility scripts
+├── tests/                     # Automated Pytest suite
+├── reports/                   # Performance charts & evaluation plots
+├── app.py                     # Streamlit web application (Port 8501)
+├── run_pipeline.py            # End-to-end training & evaluation pipeline
+└── requirements.txt           # Python dependencies
 ```
 
 ---

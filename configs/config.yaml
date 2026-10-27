@@ -13,9 +13,8 @@ project:
 
 # ---- Dataset ------------------------------------------------
 dataset:
-  # Path to the extracted Kaggle dataset root.
-  # Override this with the DATASET_ROOT environment variable in .env
-  root: "data/chest_xray"
+  # Path to our 50-50 balanced dataset containing NORMAL and PNEUMONIA
+  root: "data"
 
   # Class labels (order matters — index 0 = NORMAL, index 1 = PNEUMONIA)
   classes:

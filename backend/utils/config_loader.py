@@ -42,10 +42,13 @@ def get_config(config_path: str | None = None) -> dict:
     """
 
     # --- 1. Locate the project root -----------------------------------
-    # This file lives at  MedVision-AI/src/utils/config_loader.py
-    # Project root is three levels up.
     this_file = Path(__file__).resolve()
-    project_root = this_file.parents[3]   # MedVision-AI/
+    # Search upwards for the directory containing configs/config.yaml
+    project_root = this_file.parents[2]
+    for p in this_file.parents:
+        if (p / "configs" / "config.yaml").exists():
+            project_root = p
+            break
 
     # --- 2. Load .env -------------------------------------------------
     env_file = project_root / ".env"

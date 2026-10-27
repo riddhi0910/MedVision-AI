@@ -12,40 +12,56 @@ __pycache__/
 *$py.class
 *.pyo
 
-# Virtual environment (created locally, not portable)
+# Virtual environments
 venv/
 .venv/
 env/
 .env/
+ENV/
+env.bak/
+venv.bak/
 
-# Environment variables file (may contain API keys / paths)
+# Environment variables & secrets
 .env
+.env.local
+*.env
 
-# Dataset — never commit medical images to a public repo
+# Node & Frontend dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Dataset — never commit medical images or huge archives to Git
 data/
 chest_xray/
 *.zip
 *.tar.gz
 *.tar
+*.gz
+*.7z
+*.rar
 
-# Model checkpoints and weights (large binary files)
-artifacts/checkpoints/
-artifacts/logs/
-models/checkpoints/
+# Model checkpoints and weights (large binary files > 40MB)
 *.pth
 *.pt
 *.ckpt
 *.h5
+*.onnx
+*.bin
 
-# Jupyter notebook outputs (can contain embedded images)
+# Keep empty checkpoint folders via .gitkeep
+!**/.gitkeep
+
+# Jupyter notebook checkpoints
 notebooks/.ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Reports / generated figures (reproducible from code)
-reports/*.png
-reports/*.jpg
-reports/*.pdf
-reports/*.html
+# Logs
+*.log
+artifacts/logs/
+logs/
 
 # IDE / editor files
 .vscode/
@@ -53,10 +69,8 @@ reports/*.html
 *.swp
 *.swo
 
-# macOS
+# OS files
 .DS_Store
-
-# Windows
 Thumbs.db
 desktop.ini
 
