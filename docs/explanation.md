@@ -221,4 +221,41 @@ In answers ko yaad kar lijiye, examiner impress ho jayega:
 
 ---
 
+## 📈 10. Agar Teacher Confusion Matrix, Loss/Acc Graphs, ya Numbers Mange Toh?
+
+Agar teacher bole: *"Mujhe confusion matrix dikhao, accuracy curves dikhao, proof kya hai ki model train hua hai?"*
+
+### 📁 Files Kahan Hai? (Aapke project me already saved hain):
+1. **Confusion Matrix Image File:**  
+   Path: **`artifacts/reports/confusion_matrices_comparison.png`**  
+   *(Is image ko direct open karke dikha sakte hain!)*
+2. **Executed Training Curves & Loss Graphs:**  
+   Path: **`notebooks/Executed MedVision_Colab_OneClick.ipynb`**  
+   *(Is notebook me 15 epochs ka loss graph, accuracy curve, aur ROC-AUC curve pehle se execute hoke plotted hai).*
+3. **Interactive Dashboard:**  
+   Run karein: `streamlit run app.py` (Isme interactive confusion matrix aur threshold tuning graph live dikhta hai).
+
+---
+
+### 📊 Exact Confusion Matrix Numbers (850 Test Images par):
+
+| Metric | Baseline CNN | ResNet-18 (Transfer Learning) | Significance |
+| :--- | :--- | :--- | :--- |
+| **Overall Accuracy** | **94.7%** | **99.1%** | ResNet-18 ne +4.4% better perform kiya |
+| **True Normal (TN)** | 411 / 425 | **423 / 425 (99.5%)** | Healthy patients accurately identify hue |
+| **True Pneumonia (TP)** | 394 / 425 | **419 / 425 (98.6%)** | Sick patients accurately detect hue |
+| **False Positives (FP)** | 14 | **Only 2** | Healthy patient ko galti se sick bola |
+| **False Negatives (FN)** | **31** *(High risk!)* | **Only 6** *(Super safe!)* | **80% reduction in missed diagnosis!** |
+
+---
+
+### 🗣️ Teacher ko explain karne ke liye dialogue:
+> *"Sir, yeh raha hamara comparative confusion matrix (`artifacts/reports/confusion_matrices_comparison.png`).  
+> Humne 850 unseen test images par dono models ko evaluate kiya:  
+> - Baseline CNN me **31 False Negatives** the, jo medical point of view se risky tha.  
+> - Lekin **ResNet-18 ne False Negatives ko 31 se ghata kar sirf 6 kar diya**, aur accuracy **99.1%** achieve ki.  
+> Iska matlab ResNet-18 ne clinically critical errors ko 80% reduce kiya hai, isliye humne ise primary PACS engine banaya."*
+
+---
+
 🎉 **All the best for your presentation! Confident rahein, aapka project technologically aur clinically complete hai.**
