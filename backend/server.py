@@ -59,11 +59,19 @@ def get_loaded_model(model_name: str = "resnet18"):
         from src.training.evaluate import load_model_from_checkpoint
         model = build_resnet(cfg)
         ckpt_path = CKPT_DIR / "best_resnet18.pth"
+        if not ckpt_path.exists():
+            print(f"[API Server] {ckpt_path} not found. Auto-generating demo checkpoints and samples...")
+            try:
+                from scripts.create_demo_checkpoints import main as create_checkpoints
+                create_checkpoints()
+            except Exception as e:
+                print(f"[API Server] Could not auto-generate demo checkpoints: {e}")
+
         if ckpt_path.exists():
             model = load_model_from_checkpoint(model, ckpt_path, device)
             print(f"[API Server] Loaded ResNet-18 from {ckpt_path}")
         else:
-            print(f"[API Server] Warning: {ckpt_path} not found.")
+            print(f"[API Server] Warning: {ckpt_path} still not found, using initialized weights.")
         loaded_models["resnet18"] = model
         return model
     else:
@@ -71,11 +79,17 @@ def get_loaded_model(model_name: str = "resnet18"):
         from src.training.evaluate import load_model_from_checkpoint
         model = build_baseline_cnn(cfg)
         ckpt_path = CKPT_DIR / "best_cnn.pth"
+        if not ckpt_path.exists():
+            try:
+                from scripts.create_demo_checkpoints import main as create_checkpoints
+                create_checkpoints()
+            except Exception:
+                pass
         if ckpt_path.exists():
             model = load_model_from_checkpoint(model, ckpt_path, device)
             print(f"[API Server] Loaded Baseline CNN from {ckpt_path}")
         else:
-            print(f"[API Server] Warning: {ckpt_path} not found.")
+            print(f"[API Server] Warning: {ckpt_path} not found, using initialized weights.")
         loaded_models["cnn"] = model
         return model
 
